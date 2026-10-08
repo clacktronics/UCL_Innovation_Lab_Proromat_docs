@@ -71,7 +71,7 @@
       "id": "cee58fcf-d37f-426b-a101-e3e7b9ebc8f6",
       "only": [],
       "settings": {
-        "output_path": "e44_output"
+        "output_path": "${PROJECTNAME} Gerber Files for e44"
       },
       "type": "folder"
     }

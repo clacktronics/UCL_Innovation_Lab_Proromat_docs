@@ -736,10 +736,15 @@ Jobsets need KiCad 9 or later.
 ### 16.2 Generate the files
 
 The jobset opens in its own tab. Click **Generate** (1). The files appear in
-a new `e44_output` folder in the project (2), and the blue tick shows it
-worked:
+a new folder in the project called **`<project name> Gerber Files for e44`**
+(2), and the blue tick shows it worked. For pic_programmer that's
+`pic_programmer Gerber Files for e44`:
 
-![The E44 jobset tab after Generate: two jobs, and the e44_output folder with the files](images/export-2-generate.png)
+![The E44 jobset tab after Generate: two jobs, and the "pic_programmer Gerber Files for e44" folder with the files](images/export-2-generate.png)
+
+The folder name comes from the project's file name (`pic_programmer.kicad_pro`
+→ `pic_programmer`), so each project gets its own clearly named folder. This is
+the folder to take to the E44.
 
 | File | What it is | Use in CircuitPro |
 |---|---|---|
@@ -755,6 +760,10 @@ pic_programmer's are `top_layer.gtl` and `bottom_layer.gbl`.
 Re-run **Generate** whenever you change the board. It overwrites the old files.
 
 ### 16.3 What the jobset is set to
+
+**Output folder:** `${PROJECTNAME} Gerber Files for e44`. `${PROJECTNAME}` is a
+KiCad variable that becomes the project name. To change the folder name, click
+the gear button on the **E44 files for CircuitPro** destination.
 
 You don't need to change anything, but this is what it does. Double-click a
 job in the list to see or change its settings.
@@ -804,4 +813,4 @@ kicad-cli jobset run -f e44.kicad_jobset my_board.kicad_pro
 - [ ] Ground pour on spare area
 - [ ] As few vias and top-side joints as possible
 - [ ] DRC: 0 errors, 0 unconnected, schematic parity passes
-- [ ] Board saved, then exported with `e44.kicad_jobset` (4 files in `e44_output`)
+- [ ] Board saved, then exported with `e44.kicad_jobset` (files in `<project name> Gerber Files for e44`)

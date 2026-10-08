@@ -4,4 +4,4 @@
 .history/
 *.kicad_prl
 fp-info-cache
-e44_output/
+* Gerber Files for e44/
