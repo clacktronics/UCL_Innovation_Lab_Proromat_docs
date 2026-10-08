@@ -14,6 +14,9 @@
 #
 # Paste into:
 #   Board Setup > Design Rules > Custom Rules
+#
+# Keep each condition on a single line. KiCad silently ignores the whole
+# file if a condition string contains a line break.
 
 
 # ---------------------------------------------------------------------------
@@ -43,11 +46,7 @@
 #
 # This rule must come after the general annular rule so it takes precedence.
 (rule "E44 annular ring 0.5mm on 1.0mm holes"
-  (condition "
-    A.Type == 'Pad' &&
-    A.Hole_Size_X > 0.995mm &&
-    A.Hole_Size_X < 1.005mm
-  ")
+  (condition "A.Type == 'Pad' && A.Hole_Size_X > 0.995mm && A.Hole_Size_X < 1.005mm")
   (constraint annular_width (min 0.5mm)))
 
 
@@ -57,10 +56,7 @@
 
 # Oval holes/slots get routed with the 1.0 mm contour router.
 (rule "E44 slot narrower than 1.0mm router"
-  (condition "
-    A.Type == 'Pad' &&
-    A.Hole_Size_X != A.Hole_Size_Y
-  ")
+  (condition "A.Type == 'Pad' && A.Hole_Size_X != A.Hole_Size_Y")
   (constraint hole_size (min 1.0mm)))
 
 
@@ -75,18 +71,7 @@
 #
 # To add a size, copy one of the drill-size windows.
 (rule "E44 pad drill not in tool set (0.7/0.8/1.0/1.5/2.0)"
-  (condition "
-    A.Type == 'Pad' &&
-    A.Pad_Type != 'SMD' &&
-    A.Hole_Size_X == A.Hole_Size_Y &&
-    !(
-      (A.Hole_Size_X > 0.695mm && A.Hole_Size_X < 0.705mm) ||
-      (A.Hole_Size_X > 0.795mm && A.Hole_Size_X < 0.805mm) ||
-      (A.Hole_Size_X > 0.995mm && A.Hole_Size_X < 1.005mm) ||
-      (A.Hole_Size_X > 1.495mm && A.Hole_Size_X < 1.505mm) ||
-      (A.Hole_Size_X > 1.995mm && A.Hole_Size_X < 2.005mm)
-    )
-  ")
+  (condition "A.Type == 'Pad' && A.Pad_Type != 'SMD' && A.Hole_Size_X == A.Hole_Size_Y && !((A.Hole_Size_X > 0.695mm && A.Hole_Size_X < 0.705mm) || (A.Hole_Size_X > 0.795mm && A.Hole_Size_X < 0.805mm) || (A.Hole_Size_X > 0.995mm && A.Hole_Size_X < 1.005mm) || (A.Hole_Size_X > 1.495mm && A.Hole_Size_X < 1.505mm) || (A.Hole_Size_X > 1.995mm && A.Hole_Size_X < 2.005mm))")
   (constraint disallow pad))
 
 
@@ -96,14 +81,5 @@
 
 # Vias use the property 'Hole' rather than 'Hole_Size_X'.
 (rule "E44 via drill not in tool set (0.7/0.8/1.0/1.5/2.0)"
-  (condition "
-    A.Type == 'Via' &&
-    !(
-      (A.Hole > 0.695mm && A.Hole < 0.705mm) ||
-      (A.Hole > 0.795mm && A.Hole < 0.805mm) ||
-      (A.Hole > 0.995mm && A.Hole < 1.005mm) ||
-      (A.Hole > 1.495mm && A.Hole < 1.505mm) ||
-      (A.Hole > 1.995mm && A.Hole < 2.005mm)
-    )
-  ")
+  (condition "A.Type == 'Via' && !((A.Hole > 0.695mm && A.Hole < 0.705mm) || (A.Hole > 0.795mm && A.Hole < 0.805mm) || (A.Hole > 0.995mm && A.Hole < 1.005mm) || (A.Hole > 1.495mm && A.Hole < 1.505mm) || (A.Hole > 1.995mm && A.Hole < 2.005mm))")
   (constraint disallow via))
