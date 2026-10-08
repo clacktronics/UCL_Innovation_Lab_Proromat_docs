@@ -1,13 +1,23 @@
 # Adapting KiCad Designs for the LPKF ProtoMat E44
 
-How to take a KiCad PCB design and make it something the Innovation Lab's
-ProtoMat E44 can mill reliably. The guide works through a real example, the
-`pic_programmer` demo that ships with KiCad, from the stock design (about 270
-DRC errors against the E44 rules) to a board that passes DRC. There are two
-ways to do the pad work ([section 3](#3-choose-an-approach-a-or-b)): **A**,
-adapt a copy of one design, or **B**, build a reusable E44 footprint library.
+Producing a circuit board on the ProtoMat E44 is a little more limited than having a board produced "professionally", there are a number of reasons as listed below
 
-Screenshots are from **KiCad 10.0**. Menu names may differ slightly in older
+* The tool sizes are limited so there are a smaller amount of tool changes which have to be done manually by the user.
+* Milling involves cutting groves in the board, so the bit size limits the dimensions and the risk of burring will destroy micro traces.
+* The tolerances are kept to a size where success is more likeley
+* Plated Through hole is not available
+* Silkscreen and solder mask is not available
+
+The advantage is that once you have your design you can make it yourself within an hour!
+
+This guide is to show how to take a KiCad PCB design and make it something the Innovation Lab's
+ProtoMat E44 can mill reliably. The guide works through a real example, the
+`pic_programmer` demo that ships with KiCad that you should be able to find on every install. We use design rule checks on the stock design and modify it to suit the E44 machine.
+
+There are two ways to do the pad work ([section 3](#3-choose-an-approach-a-or-b)): **A**,
+adapt a copy of one design, or **B**, build a reusable E44 footprint library. A is better if you have made the design already and you are bringing it to the machine to test and perhaps might make it elsewhere later. B is better if you are working on a design that is finalised on the E44 machine and it won't go further.
+
+Screenshots are from **KiCad 10.0**. Menu names may differ slightly in older or newer
 versions.
 
 > **Status: draft.** Sections marked **TODO** still need checking against how
@@ -40,21 +50,21 @@ Related files:
 
 ---
 
-## 1. Why designs need adapting
+## 1. Why designs need adapting and what a mill is for
 
-A commercial board house etches copper chemically and can hold tracks and gaps
-of 0.15 mm or less. The E44 cuts copper away mechanically: a V-shaped cutter
-mills an isolation channel around every track and pad. This means:
+A commercial board house such as JLCPCB, Eurocircuits or PCBWAY etches copper chemically and has sophisticated well set up production lines that can hold tracks and gaps
+of 0.15 mm or less. The E44 cuts copper away mechanically, it is a CNC mill not an imaging machine. It uses a V-shaped cutter
+and mills an isolation channel around every track and pad. This means:
 
-- **Gaps are set by the cutter.** Copper closer together than the isolation
-  channel can't be separated.
-- **Holes come from a fixed set of drills.** A hole size that isn't in the
+- **Gaps are set by the cutter.** Copper closer together than the width possible with the mill bit can't be separated.
+- **Holes come from a fixed set of drills.** A hole size that isn't in the diameter of the drill bits in
   tool rack can't be made.
 - **Fine features are fragile.** Thin tracks and small annular rings can tear
   off during milling or when soldering.
 - **Holes aren't plated.** A board house plates every hole so the top and
   bottom copper are joined. On the E44 they aren't (see
   [section 14](#14-things-drc-wont-tell-you)).
+- **More detail takes more time** As the mill has to outline every track, the more complex the design the longer it will take.
 
 KiCad's default libraries and settings assume a board house, so most designs
 need some changes before they will mill well. The E44 is rated to 0.1 mm tracks
@@ -79,6 +89,8 @@ All dimensions in mm.
 
 ### Tool set
 
+The tool set has been selected to give the best results with minimal tool changes.
+
 | Tool | Size | Used for |
 |---|---|---|
 | Universal Cutter | 0.2–0.5 | Isolation milling. Isolation width set to 0.3 in CircuitPro |
@@ -88,7 +100,7 @@ All dimensions in mm.
 
 ## 3. Choose an approach: A or B
 
-Most of the work is making the holes and pads fit the E44. There are two ways
+Most of the work getting the design to fit the E44 is making the holes and pads fit the E44. There are two ways
 to do it. Steps 1–3 and 6–8 are the same for both; only Step 5 differs.
 
 | | **A: Adapt this design as a one-off** | **B: Make an E44 footprint library** |
@@ -105,7 +117,7 @@ pads, and the E44 changes live only in a copy you can throw away.
 
 **Choose B** when you only use the machine. You do the pad work once per
 part, and every later design that uses the same parts is E44-ready from the
-start.
+start. It can also be good for coming up with a standard library you can re-sue later.
 
 The example below was done both ways:
 [`../examples/pic_programmer_option_A/`](../examples/pic_programmer_option_A/)
@@ -116,15 +128,19 @@ Both pass DRC.
 
 ## 4. The example: pic_programmer
 
+You can work on your own design which is more likely for following this guide, here we will work on a demo project that is shipped with KiCAD.
 `pic_programmer` is one of the demo projects installed with KiCad (look in
 KiCad's `demos` folder, or **File → Open Demo Project** from the KiCad project
-manager). It's a two-layer, through-hole board, which makes it a good
-match for the E44, but it was designed for a board house.
+manager). It is a good example of a project that will work well on the mill. It's a two-layer, through-hole board, 
+but it was designed for a board house with more drill options and different track spacing limitations.
 
 ![The stock pic_programmer board in the KiCad 10 PCB editor](images/original-board.png)
 
-Copy the demo to your own folder before changing it. The finished versions are
-in [`../examples/`](../examples/) so you can compare your result.
+I recommend making a copy before adapting the design, this way you can fall back to your original design
+if you want to send it off to a board house.
+
+**File → Save As..** will let you create a renamed copy
+
 
 ## 5. Step 1: Add the E44 rules
 
