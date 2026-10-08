@@ -18,7 +18,7 @@ Lab's ProtoMat E44 can mill reliably.
 
 Related files:
 
-- [`../design_rules.kicad_dru`](../design_rules.kicad_dru): KiCad custom rules
+- [`../e44.kicad_dru`](../e44.kicad_dru): KiCad custom rules
 - [`../E44_PCB_Design_Rules_Poster.pdf`](../E44_PCB_Design_Rules_Poster.pdf): one-page summary poster
 
 ---
@@ -74,11 +74,11 @@ Do this at the start of a new design, or before adapting an existing one.
 
 1. Open the PCB in the PCB Editor.
 2. **File → Board Setup → Design Rules → Custom Rules**.
-3. Paste the contents of [`design_rules.kicad_dru`](../design_rules.kicad_dru).
+3. Paste the contents of [`e44.kicad_dru`](../e44.kicad_dru).
 4. Click **Check rule syntax**, then **OK**.
 
 KiCad stores these rules in `<project name>.kicad_dru` next to your
-`.kicad_pro` file. Copying `design_rules.kicad_dru` into your project folder
+`.kicad_pro` file. Copying `e44.kicad_dru` into your project folder
 and renaming it to match the project has the same effect.
 
 The custom rules catch problems at DRC time. The steps below set KiCad's
