@@ -1,8 +1,8 @@
-# pic_programmer, adapted for the E44
+# pic_programmer, adapted for the E44 (option B: footprint library)
 
 KiCad's `pic_programmer` demo project (by Jean-Pierre Charras, distributed
 with KiCad) after adapting it to the E44 rules, as worked through in the
-[manual](../../manual/README.md). Open `pic_programmer.kicad_pro` in KiCad 10.
+[manual](../../manual/README.md) using option B. Open `pic_programmer.kicad_pro` in KiCad 10.
 
 What changed from the stock demo:
 

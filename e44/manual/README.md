@@ -3,7 +3,9 @@
 How to take a KiCad PCB design and make it something the Innovation Lab's
 ProtoMat E44 can mill reliably. The guide works through a real example, the
 `pic_programmer` demo that ships with KiCad, from the stock design (about 270
-DRC errors against the E44 rules) to a board that passes DRC.
+DRC errors against the E44 rules) to a board that passes DRC. There are two
+ways to do the pad work ([section 3](#3-choose-an-approach-a-or-b)): **A**,
+adapt a copy of one design, or **B**, build a reusable E44 footprint library.
 
 Screenshots are from **KiCad 10.0**. Menu names may differ slightly in older
 versions.
@@ -13,24 +15,28 @@ versions.
 
 - [1. Why designs need adapting](#1-why-designs-need-adapting)
 - [2. The rules at a glance](#2-the-rules-at-a-glance)
-- [3. The example: pic_programmer](#3-the-example-pic_programmer)
-- [4. Step 1: Add the E44 rules](#4-step-1-add-the-e44-rules)
-- [5. Step 2: Set the board defaults](#5-step-2-set-the-board-defaults)
-- [6. Step 3: Run DRC to see what needs changing](#6-step-3-run-drc-to-see-what-needs-changing)
-- [7. Step 4: Make E44 versions of your footprints](#7-step-4-make-e44-versions-of-your-footprints)
-- [8. Step 5: Fix tracks, vias, text and pours](#8-step-5-fix-tracks-vias-text-and-pours)
-- [9. Step 6: Reroute what no longer fits](#9-step-6-reroute-what-no-longer-fits)
-- [10. Step 7: Final DRC](#10-step-7-final-drc)
-- [11. Things DRC won't tell you](#11-things-drc-wont-tell-you)
-- [12. DRC message reference](#12-drc-message-reference)
-- [13. Exporting for CircuitPro](#13-exporting-for-circuitpro)
-- [14. Pre-flight checklist](#14-pre-flight-checklist)
+- [3. Choose an approach: A or B](#3-choose-an-approach-a-or-b)
+- [4. The example: pic_programmer](#4-the-example-pic_programmer)
+- [5. Step 1: Add the E44 rules](#5-step-1-add-the-e44-rules)
+- [6. Step 2: Set the board defaults](#6-step-2-set-the-board-defaults)
+- [7. Step 3: Run DRC to see what needs changing](#7-step-3-run-drc-to-see-what-needs-changing)
+- [8. Step 4: What the holes and pads need](#8-step-4-what-the-holes-and-pads-need)
+- [9. Step 5, option A: Edit the pads on a copy of the board](#9-step-5-option-a-edit-the-pads-on-a-copy-of-the-board)
+- [10. Step 5, option B: Make an E44 footprint library](#10-step-5-option-b-make-an-e44-footprint-library)
+- [11. Step 6: Fix tracks, vias, text and pours](#11-step-6-fix-tracks-vias-text-and-pours)
+- [12. Step 7: Reroute what no longer fits](#12-step-7-reroute-what-no-longer-fits)
+- [13. Step 8: Final DRC](#13-step-8-final-drc)
+- [14. Things DRC won't tell you](#14-things-drc-wont-tell-you)
+- [15. DRC message reference](#15-drc-message-reference)
+- [16. Exporting for CircuitPro](#16-exporting-for-circuitpro)
+- [17. Pre-flight checklist](#17-pre-flight-checklist)
+
 
 Related files:
 
 - [`../e44.kicad_dru`](../e44.kicad_dru): KiCad custom rules
 - [`../E44_PCB_Design_Rules_Poster.pdf`](../E44_PCB_Design_Rules_Poster.pdf): one-page summary poster
-- [`../examples/pic_programmer/`](../examples/pic_programmer/): the adapted example project
+- [`../examples/pic_programmer_option_A/`](../examples/pic_programmer_option_A/) and [`../examples/pic_programmer_option_B/`](../examples/pic_programmer_option_B/): the example adapted each way
 
 ---
 
@@ -48,7 +54,7 @@ mills an isolation channel around every track and pad. This means:
   off during milling or when soldering.
 - **Holes aren't plated.** A board house plates every hole so the top and
   bottom copper are joined. On the E44 they aren't (see
-  [section 11](#11-things-drc-wont-tell-you)).
+  [section 14](#14-things-drc-wont-tell-you)).
 
 KiCad's default libraries and settings assume a board house, so most designs
 need some changes before they will mill well. The E44 is rated to 0.1 mm tracks
@@ -80,7 +86,35 @@ All dimensions in mm.
 | Contour router | 1.0 | Board outline, slots, cutouts |
 | Spiral drills | 0.7, 0.8, 1.0, 1.5, 2.0 | All round holes and vias |
 
-## 3. The example: pic_programmer
+## 3. Choose an approach: A or B
+
+Most of the work is making the holes and pads fit the E44. There are two ways
+to do it. Steps 1–3 and 6–8 are the same for both; only Step 5 differs.
+
+| | **A: Adapt this design as a one-off** | **B: Make an E44 footprint library** |
+|---|---|---|
+| What you change | The pads on a **copy** of the board | Copies of the footprints, saved in a library |
+| Original design | Untouched | Points at the E44 footprints from then on |
+| Effort | Less, for one board | More the first time, then none for the same parts |
+| Best for | Milling a prototype on the E44, then **sending the same design to a PCB pooling service** (board house) | Designs that will **only ever be made on the E44**, or parts you use again and again |
+| Going back to stock footprints | Use the original file, or **Tools → Update Footprints from Library** | Swap the footprints back by hand |
+
+**Choose A** when the E44 board is a quick prototype and the real boards will
+come from a board house. Your original design keeps its fine board-house
+pads, and the E44 changes live only in a copy you can throw away.
+
+**Choose B** when you only use the machine. You do the pad work once per
+part, and every later design that uses the same parts is E44-ready from the
+start.
+
+The example below was done both ways:
+[`../examples/pic_programmer_option_A/`](../examples/pic_programmer_option_A/)
+and
+[`../examples/pic_programmer_option_B/`](../examples/pic_programmer_option_B/).
+Both pass DRC.
+
+
+## 4. The example: pic_programmer
 
 `pic_programmer` is one of the demo projects installed with KiCad (look in
 KiCad's `demos` folder, or **File → Open Demo Project** from the KiCad project
@@ -89,11 +123,10 @@ match for the E44, but it was designed for a board house.
 
 ![The stock pic_programmer board in the KiCad 10 PCB editor](images/original-board.png)
 
-Copy the demo to your own folder before changing it. The finished version is in
-[`../examples/pic_programmer/`](../examples/pic_programmer/) so you can compare
-your result.
+Copy the demo to your own folder before changing it. The finished versions are
+in [`../examples/`](../examples/) so you can compare your result.
 
-## 4. Step 1: Add the E44 rules
+## 5. Step 1: Add the E44 rules
 
 1. Open the board in the PCB Editor.
 2. **File → Board Setup… → Design Rules → Custom Rules**.
@@ -118,7 +151,7 @@ same thing.
 >
 > Keep each `condition "..."` on a single line if you edit the rules.
 
-## 5. Step 2: Set the board defaults
+## 6. Step 2: Set the board defaults
 
 The custom rules catch problems when you run DRC. Setting KiCad's defaults to
 match stops you creating those problems while you work. All of these are in
@@ -175,7 +208,7 @@ matter (pic_programmer reports nearly 100 of them):
 
 ![Board Setup, Violation Severity page with the silkscreen checks set to Ignore](images/board-setup-violation-severity.png)
 
-## 6. Step 3: Run DRC to see what needs changing
+## 7. Step 3: Run DRC to see what needs changing
 
 **Inspect → Design Rules Checker**, then **Run DRC**.
 
@@ -189,43 +222,24 @@ For the stock pic_programmer the errors were:
 
 | Problem | Count | Fixed in |
 |---|---|---|
-| Annular ring too small | ~200 | [Step 4](#7-step-4-make-e44-versions-of-your-footprints) |
-| Pad hole not in the drill set | 38 | [Step 4](#7-step-4-make-e44-versions-of-your-footprints) |
-| Via hole not in the drill set | 6 | [Step 5](#8-step-5-fix-tracks-vias-text-and-pours) |
-| Track narrower than 0.5 mm | 11 | [Step 5](#8-step-5-fix-tracks-vias-text-and-pours) |
-| Copper closer than 0.35 mm | 16 | [Step 6](#9-step-6-reroute-what-no-longer-fits) |
-| Copper closer than 1.0 mm to the edge | 1 | [Step 5](#8-step-5-fix-tracks-vias-text-and-pours) (zone refill) |
+| Annular ring too small | ~200 | [Steps 4–5](#8-step-4-what-the-holes-and-pads-need) |
+| Pad hole not in the drill set | 38 | [Steps 4–5](#8-step-4-what-the-holes-and-pads-need) |
+| Via hole not in the drill set | 6 | [Step 6](#11-step-6-fix-tracks-vias-text-and-pours) |
+| Track narrower than 0.5 mm | 11 | [Step 6](#11-step-6-fix-tracks-vias-text-and-pours) |
+| Copper closer than 0.35 mm | 16 | [Step 7](#12-step-7-reroute-what-no-longer-fits) |
+| Copper closer than 1.0 mm to the edge | 1 | [Step 6](#11-step-6-fix-tracks-vias-text-and-pours) (zone refill) |
 
 Nearly all of these come from footprints, so start there.
 
-## 7. Step 4: Make E44 versions of your footprints
+## 8. Step 4: What the holes and pads need
 
 Footprints are where most of the work is. Stock KiCad footprints assume
-plated board-house holes and tight pad spacing.
+plated board-house holes and tight pad spacing. This section says what every
+hole and pad has to become. The next step does it, using
+[option A](#9-step-5-option-a-edit-the-pads-on-a-copy-of-the-board) or
+[option B](#10-step-5-option-b-make-an-e44-footprint-library).
 
-### 7.1 Make a project library
-
-Don't edit footprints one at a time on the board: the next **Update PCB from
-Schematic** overwrites them. Instead keep E44 copies in a project library:
-
-1. **Preferences → Manage Footprint Libraries… → Project Specific
-   Libraries**.
-2. Click the folder button and create a new library, for example `E44.pretty`
-   in the project folder, with nickname `E44`.
-
-![Footprint Libraries dialog with the E44 project library added](images/footprint-libraries.png)
-
-3. Open **Tools → Footprint Editor**, open each stock footprint the board
-   uses, and **File → Save As…** into the `E44` library. Adding `_E44` to
-   the name makes them easy to tell apart.
-4. Edit the copy (sections 7.2–7.6 below) and save it.
-
-This builds up a reusable set of E44-ready footprints. The 21 made for
-pic_programmer are in
-[`../examples/pic_programmer/E44.pretty`](../examples/pic_programmer/E44.pretty).
-**TODO:** decide whether the lab keeps a shared E44 library in this repository.
-
-### 7.2 Hole sizes
+### 8.1 Hole sizes
 
 Every round hole must be 0.7, 0.8, 1.0, 1.5 or 2.0 mm. KiCad's hole sizes
 already include room for the lead, so round each one to the nearest drill in
@@ -240,9 +254,9 @@ the set, going **up** unless the bigger hole no longer fits on the pin pitch.
 | 1.1 | 1.0 | TO-220 regulator. Rounded **down**: a 1.5 mm hole needs a 2.7 mm pad, which doesn't fit at 2.54 mm pitch. Check the part's lead size against 1.0 mm |
 | 1.2, 1.27, 1.3 | 1.5 | Electrolytics, inductor, trimmer, terminal block |
 | 2.0 | 2.0 | ZIF socket mounting pegs |
-| Over 2.0 | Routed cutout | Mounting holes (see 7.4) |
+| Over 2.0 | Routed cutout | Mounting holes (see 8.3) |
 
-### 7.3 Pad sizes and annular rings
+### 8.2 Pad sizes and annular rings
 
 The annular ring is the copper left around a hole:
 `(pad size − hole size) / 2`. It must be at least 0.6 mm, or 0.5 mm on a
@@ -256,12 +270,7 @@ The annular ring is the copper left around a hole:
 | 1.5 | 2.7 |
 | 2.0 | 3.2 |
 
-For an oval pad only the narrow side has to meet the minimum. Double-click a
-pad in the Footprint Editor (or on the board) to open **Pad Properties** and
-change **Pad size X / Y** and the hole **Diameter**. The pic_programmer DIP
-sockets kept their long 2.4 mm pads and only grew the narrow side:
-
-![Pad Properties for a DIP socket pad, before (2.4 x 1.6) and after (2.4 x 2.0)](images/pad-properties.png)
+For an oval or rectangular pad only the narrow side has to meet the minimum.
 
 Bigger pads use up the space between them, so check the gap stays at least
 0.35 mm. On a 2.54 mm pitch, 2.0 mm pads leave 0.54 mm, which passes, but no
@@ -281,7 +290,7 @@ track can fit through.
 | Trimmer (RV1) | 1.27 / 2.03 | 1.5 / 2.7 |
 | Terminal block (P1) | 1.3 / 3.0 | 1.5 / 3.0 |
 
-### 7.4 Holes bigger than 2.0 mm
+### 8.3 Holes bigger than 2.0 mm
 
 The drills stop at 2.0 mm, but the 1.0 mm contour router cuts anything drawn
 on **Edge.Cuts**, including internal cutouts. So for mounting holes and other
@@ -294,24 +303,20 @@ large holes:
 pic_programmer had three kinds: the six M4 mounting holes (4.3 mm), the DSUB
 connector's mounting holes (3.2 mm) and the TO-220 tab hole (3.5 mm).
 
-![E44 version of the DSUB-9 footprint, with 2.0 mm pads and the mounting holes drawn on Edge.Cuts](images/footprint-editor-dsub.png)
-
 The copper-to-edge rule applies to these cutouts too, so nearby copper must be
 at least 1.0 mm away.
 
-### 7.5 Swap footprints that can't be fixed
+### 8.4 Swap footprints that can't be fixed
 
 Some footprints can't meet the rules however you size the pads. The
 pic_programmer transistors used a TO-92 footprint with 1.27 mm pin pitch:
 2.0 mm pads would overlap. The fix is a different footprint, KiCad's
 `TO-92_Wide` (same triangle, 2.54 mm pitch). TO-92 leads bend easily to fit.
 
-![The E44 TO-92_Wide footprint](images/footprint-editor-to92.png)
-
 The wider footprint is bigger, so when you place it check it doesn't run into
 its neighbours. Here the solder jumper next to Q3 had to move 1.27 mm.
 
-### 7.6 Surface-mount parts
+### 8.5 Surface-mount parts
 
 The finest pitch that works is 0.95 mm (SOT-23-5). SOIC (1.27 mm) and larger
 are fine. TSSOP, MSOP, QFN and similar won't mill: choose a SOIC or
@@ -319,10 +324,243 @@ through-hole version, or use a breakout board.
 
 The 0.35 mm clearance applies between pads **inside** a footprint too.
 pic_programmer's only SMD part, the solder jumper JP1, has a 0.3 mm gap
-between its pads. In the E44 copy each pad was moved 0.1 mm outwards to make
+between its pads. In the E44 version each pad was moved 0.1 mm outwards to make
 it 0.5 mm, which is still easy to bridge with solder.
 
-### 7.7 Put the E44 footprints on the board
+## 9. Step 5, option A: Edit the pads on a copy of the board
+
+Here you change the pads directly on the board, in groups, without touching
+any footprint library. Nothing in this section involves opening pads one at
+a time.
+
+### 9.1 Work on a copy
+
+**File → Save As…** and give the board a new name, for example
+`pic_programmer_E44.kicad_pcb`. Make every change in the copy. The original
+stays as it is, ready to send to a board house.
+
+### 9.2 Open the Drills list
+
+**View → Panels → Search**, then the **Drills** tab. It lists every hole size
+on the board and how many there are. Stock pic_programmer has 13 sizes, and
+most of them aren't in the E44 drill set:
+
+![The Search panel's Drills tab, listing every hole size on the board](images/optA-1-drills-panel.png)
+
+### 9.3 Change many pads at once
+
+Clicking a row in the Drills list **selects every pad with that hole size**.
+The **Properties** panel on the left then edits all of them together.
+
+For each row, set the hole to a drill from the set and the pad to at least the
+minimum size, using the tables in [Step 4](#8-step-4-what-the-holes-and-pads-need):
+
+1. Click the row (here the nine 0.75 mm holes of the TO-92 transistors).
+2. Set **Size X** to the minimum pad size (2.0 mm).
+3. Set **Hole Size X** to the E44 drill (0.8 mm). Press Enter after each value.
+
+![Clicking the 0.75 mm row selects all 9 pads; Size X and Hole Size X are then set for all of them](images/optA-2-select-row.png)
+
+The row disappears into the 0.8 mm row, because those pads now have 0.8 mm
+holes:
+
+![After the edit, the 0.75 mm holes have joined the 0.8 mm row](images/optA-3-edited.png)
+
+Work down the list. For pic_programmer:
+
+| Drills row | Count | Set Hole Size X | Set Size X |
+|---|---|---|---|
+| 0.75 mm | 9 | 0.8 | 2.0 |
+| 0.9 mm | 6 | 1.0 | 2.0 |
+| 1.1 mm | 3 | 1.0 | 2.0 |
+| 1.2 mm | 4 | 1.5 | 2.7 |
+| 1.27 mm | 3 | 1.5 | 2.7 |
+| 1.3 mm | 4 | 1.5 | 2.7 |
+| 0.8 mm (now 165 pads) | 165 | (already 0.8) | 2.0 |
+| 1.0 mm (now 58 pads) | 58 | (already 1.0) | 2.0 |
+| 2.0 mm | 2 | (already 2.0) | 3.2 |
+| 0.6 mm **Via** | 6 | Via: **Diameter** 1.9, **Hole** 0.7 | |
+| 3.2, 3.5, 4.3 mm | 9 | Too big to drill: see [9.6](#96-holes-bigger-than-20-mm) | |
+
+![Setting Size X on all 165 pads with 0.8 mm holes in one go](images/optA-4-pad-width.png)
+
+> **Watch the row positions.** If every selected pad is non-round, the panel
+> shows an extra **Size Y** row and everything below it moves down one line.
+> Check you're typing into the field you mean.
+
+After this, every **round** pad on the board is done. Setting Size X on a
+mixed row also changes the X size of the oval pads in it, so pic_programmer's
+long 2.4 × 1.6 mm DIP pads become 2.0 × 1.6 mm. That's fine: the next step
+fixes their height, and 2.0 × 2.0 mm pads pass the rules.
+
+### 9.4 Fix the non-round pads
+
+A Drills row mixes pad shapes. pic_programmer's 0.8 mm row has round resistor
+pads, oval DIP pads and square pin-1 pads. When a selection contains round
+pads, the Properties panel only shows **Size X**, so the oval and square pads
+are still too narrow in Y. Run DRC: the only annular-ring errors left are on
+those pads.
+
+To fix them, select only non-round pads, so that **Size Y** appears:
+
+1. In the **Selection Filter** (bottom right), untick **All items** and tick
+   only **Pads**.
+2. Drag a box around each IC or socket. Hold **Shift** while dragging to add
+   more boxes to the selection.
+3. If a round pad gets caught in a box, **Ctrl+Shift+click** it to remove it.
+   **Size Y** only appears when no round pads are selected.
+4. Set **Size Y** (2.0 mm here).
+
+![Pads-only filter, six DIP footprints box-selected, and Size Y set for all 82 pads](images/optA-5-dip-select.png)
+
+The pads still flagged after that are scattered: mostly square pin-1 pads
+on the diodes, LEDs and connector, plus any DIP pad a box missed. Run DRC to
+find them, **Shift+click** each one to build a single selection, then set
+**Size Y** once:
+
+![15 square pin-1 pads Shift+clicked into one selection, Size Y about to be set](images/optA-6-pin1-select.png)
+
+Pads keep their shapes, so pin 1 is still square. Since an E44 board has no
+silkscreen, that square is the only pin-1 marker you'll have.
+
+> **Quicker, but loses shapes:** right-click a finished pad → **Copy Pad
+> Properties to Default**, then select a Drills row, right-click a selected
+> pad → **Paste Default Pad Properties to Selected**. Every pad in the row
+> becomes a copy of that pad, **including its shape**, so pin-1 squares and
+> long DIP pads all turn into circles. It passes DRC; use it if you don't mind
+> losing the pin-1 marks.
+
+### 9.5 Swap footprints that can't be fixed
+
+The TO-92 transistors are 1.27 mm pitch, too tight for 2.0 mm pads
+([8.4](#84-swap-footprints-that-cant-be-fixed)). Swap all three at once with
+**Edit → Change Footprints…**:
+
+1. Choose **Change footprints with library id** and enter the current one
+   (`footprints:TO-92`).
+2. In **New footprint library id**, enter `Package_TO_SOT_THT:TO-92_Wide`.
+3. Click **Change**.
+
+![Change Footprints dialog swapping every footprints:TO-92 for TO-92_Wide](images/optA-7-change-footprints.png)
+
+The new footprints come with their stock 1.5 mm pads, so fix them too. For
+identical footprints, **Push Pad Properties** is quickest: fix one pad, then
+right-click it → **Push Pad Properties to Other Pads…**. Untick **Do not modify
+pads having a different orientation** (the three transistors face different
+ways), then **Change Pads on Identical Footprints**:
+
+![Fixing one TO-92 pad and pushing it to the same pad on the other two transistors](images/optA-8-push-pad.png)
+
+Do the same once for pin 1 (the square pad), setting both Size X and Size Y.
+
+**Change Footprints** keeps pin 1 where it was, so the wider footprint can run
+into its neighbours. Press **M** to move each one back to the middle of where
+it was. On pic_programmer, Q1 needed moving, and the solder jumper JP1 next
+to Q3 had to move 1.27 mm.
+
+The solder jumper JP1 is the board's only SMD part, and its two pads are
+0.3 mm apart ([8.5](#85-surface-mount-parts)). Click each pad and add 0.1 mm
+to its **Position X** in the Properties panel (one pad left, one right) to
+open the gap to 0.5 mm.
+
+> Changing footprints in the board but not the schematic gives a
+> "doesn't match footprint given by symbol" note in the parity check. On a
+> one-off copy that's expected and harmless.
+
+### 9.6 Holes bigger than 2.0 mm
+
+Mounting holes and similar have to be cut by the router as an **Edge.Cuts**
+circle ([8.3](#83-holes-bigger-than-20-mm)). You can do that inside the board
+copy without a library:
+
+1. Select the footprint (with **Footprints** ticked in the Selection Filter),
+   right-click → **Open in Footprint Editor** (**Ctrl+E**). The banner says
+   "Saving will update the board only", so the library is untouched.
+2. Switch to the **Edge.Cuts** layer and draw a circle centred on the hole.
+   Then select the circle and type the exact **Center X / Y** (from the pad's
+   Position) and **Radius** (half the hole size) into the Properties panel.
+3. Delete the pad. Tip: in the editor's Selection Filter, tick only **Pads**
+   so you don't pick up the overlapping text by mistake.
+4. **File → Save** (Ctrl+S) and close the Footprint Editor.
+
+![The TO-220's 3.5 mm tab hole replaced by an Edge.Cuts circle, editing the board copy only](images/optA-9-cutout.png)
+
+Repeat for each footprint with a big hole. pic_programmer has nine big holes
+in eight footprints: the TO-220 tab (U3), the DSUB connector (J1, two holes)
+and six M4 mounting holes (P101–P106).
+
+### 9.7 Silence the library warnings
+
+Every pad you changed makes its footprint differ from the library, so DRC
+gives a "Footprint … does not match copy in library" **warning** for each. On
+a one-off copy that's exactly what you meant. Right-click one →
+**Ignore all 'Footprint doesn't match copy in library' violations**:
+
+![Right-click a library-mismatch warning to ignore that check](images/optA-10-ignore-library-warnings.png)
+
+Now carry on with [Step 6](#11-step-6-fix-tracks-vias-text-and-pours): tracks,
+vias, text and pours are the same for both approaches.
+
+### 9.8 Going back to the board-house design
+
+- If you worked on a copy (9.1), just open the original. Nothing in it has
+  changed.
+- If you edited the original by mistake, **Tools → Update Footprints from
+  Library…** puts back the stock pads, and **Tools → Update PCB from
+  Schematic…** puts back footprints you swapped. Tracks you rerouted for the
+  E44 stay as they are, so check them before sending the board off.
+
+
+## 10. Step 5, option B: Make an E44 footprint library
+
+Here you make E44 versions of each footprint once, in a library, and use them
+in every design you mill. It's more work the first time, but the next board
+that uses the same parts needs no pad editing at all.
+
+### 10.1 Make a library
+
+Keep E44 copies of footprints in a library of their own:
+
+1. **Preferences → Manage Footprint Libraries… → Project Specific
+   Libraries**.
+2. Click the folder button and create a new library, for example `E44.pretty`
+   in the project folder, with nickname `E44`.
+
+![Footprint Libraries dialog with the E44 project library added](images/footprint-libraries.png)
+
+3. Open **Tools → Footprint Editor**, open each stock footprint the board
+   uses, and **File → Save As…** into the `E44` library. Adding `_E44` to
+   the name makes them easy to tell apart.
+4. Edit the copy to the sizes in [Step 4](#8-step-4-what-the-holes-and-pads-need) and save it.
+
+This builds up a reusable set of E44-ready footprints. The 21 made for
+pic_programmer are in
+[`../examples/pic_programmer_option_B/E44.pretty`](../examples/pic_programmer_option_B/E44.pretty).
+**TODO:** decide whether the lab keeps a shared E44 library in this repository.
+
+### 10.2 Edit the footprints
+
+In the Footprint Editor, double-click a pad to open **Pad Properties** and
+set **Pad size X / Y** and the hole **Diameter**. The pic_programmer DIP
+sockets kept their long 2.4 mm pads and only grew the narrow side:
+
+![Pad Properties for a DIP socket pad, before (2.4 x 1.6) and after (2.4 x 2.0)](images/pad-properties.png)
+
+The Properties panel tricks in
+[option A](#93-change-many-pads-at-once) also work in the Footprint Editor:
+select every pad of the footprint and change them together.
+
+For holes over 2.0 mm, delete the pad and draw an **Edge.Cuts** circle
+([8.3](#83-holes-bigger-than-20-mm)):
+
+![E44 version of the DSUB-9 footprint, with 2.0 mm pads and the mounting holes drawn on Edge.Cuts](images/footprint-editor-dsub.png)
+
+For footprints that can't be fixed ([8.4](#84-swap-footprints-that-cant-be-fixed)),
+start from a different stock footprint, such as `TO-92_Wide`:
+
+![The E44 TO-92_Wide footprint](images/footprint-editor-to92.png)
+
+### 10.3 Put the E44 footprints on the board
 
 Once the library is ready:
 
@@ -335,14 +573,14 @@ Once the library is ready:
 3. Run DRC with **Test for parity between PCB and schematic** ticked to check
    the board and schematic agree.
 
-## 8. Step 5: Fix tracks, vias, text and pours
+## 11. Step 6: Fix tracks, vias, text and pours
 
 - **Thin tracks.** Select them, press **E** and set the width to at least 0.5.
   pic_programmer had 11 tracks of 0.35–0.43 mm. **Edit → Edit Track & Via
   Properties…** can change all tracks of a net class at once.
 - **Vias.** Change every via to 1.9 / 0.7 with **Edit → Edit Track & Via
   Properties…**. Better still, avoid vias (see
-  [section 11](#11-things-drc-wont-tell-you)).
+  [section 14](#14-things-drc-wont-tell-you)).
 - **Copper text.** Text on a copper layer is milled like a track, and KiCad's
   default text strokes (0.3 mm on this board) are thinner than the 0.5 mm
   track minimum. DRC doesn't check this. Move labels to the silkscreen layer
@@ -355,7 +593,7 @@ Once the library is ready:
   bit of bare board has to be milled away, so a pour saves machine time and
   tool wear.
 
-## 9. Step 6: Reroute what no longer fits
+## 12. Step 7: Reroute what no longer fits
 
 After the footprint changes DRC still listed about 30 clearance errors. Most
 were tracks that used to run between 2.54 mm pins, which there's no longer
@@ -390,14 +628,20 @@ which parts of the board you'd like to keep clear.
 
 ![Close-up of the serial connector area before and after](images/closeup-connector.png)
 
-## 10. Step 7: Final DRC
+## 13. Step 8: Final DRC
 
 Run DRC again, with **Refill all zones before performing DRC** ticked. The
 board is ready when there are no errors and no unconnected items.
 
-![DRC dialog on the adapted board: 0 violations, 0 unconnected](images/drc-after.png)
+| Option A (pads edited on a copy) | Option B (E44 footprint library) |
+|---|---|
+| ![Option A: DRC with 0 violations, 0 unconnected](images/optA-11-drc-final.png) | ![Option B: DRC with 0 violations, 0 unconnected](images/drc-after.png) |
+| ![The pic_programmer board adapted with option A](images/optA-12-board.png) | ![The pic_programmer board adapted with option B](images/adapted-board.png) |
 
-![The adapted pic_programmer board](images/adapted-board.png)
+The two boards differ in detail (the autorouter made different choices, and
+option A keeps each pad's original shape), but both pass every E44 rule.
+
+The copper the E44 will leave behind on the option B board (black is copper):
 
 The copper the E44 will leave behind on each side (black is copper):
 
@@ -405,7 +649,7 @@ The copper the E44 will leave behind on each side (black is copper):
 |---|---|
 | ![Bottom copper of the adapted board](images/copper-bottom.png) | ![Top copper of the adapted board](images/copper-top.png) |
 
-## 11. Things DRC won't tell you
+## 14. Things DRC won't tell you
 
 - **Holes aren't plated.** On a board-house PCB every hole joins top and
   bottom copper. On the E44 they don't, so:
@@ -420,37 +664,37 @@ The copper the E44 will leave behind on each side (black is copper):
   **TODO:** document the lab's double-sided practice (rivets, through-plating,
   board flipping and alignment). Until then, prefer single-sided boards, or
   keep top-layer tracks away from pads you can't reach from the top.
-- **Copper text width** isn't checked (see [Step 5](#8-step-5-fix-tracks-vias-text-and-pours)).
+- **Copper text width** isn't checked (see [Step 6](#11-step-6-fix-tracks-vias-text-and-pours)).
 - **Inside corners** of the board outline and cutouts can't be sharper than
   R0.5, because the router is 1.0 mm. Round them off, or allow for it in
   anything that has to fit.
 - **Lead sizes.** The drill table is a starting point. Check the datasheet
   lead size of any part you round down (like the TO-220 here).
 
-## 12. DRC message reference
+## 15. DRC message reference
 
 | DRC message | Cause | Fix |
 |---|---|---|
 | `E44 clearance 0.35mm` | Copper too close together | Reroute, or shrink pads in the E44 footprint |
 | `E44 min track 0.5mm` | Track narrower than 0.5 mm | Select the track, press **E**, set width to 0.5 or more |
 | `E44 copper to edge 1.0mm` | Copper within 1.0 mm of Edge.Cuts | Move the part or track inwards, or refill the zone |
-| `E44 annular ring 0.6mm` | Pad too small for its hole | Enlarge the pad ([7.3](#73-pad-sizes-and-annular-rings)) |
+| `E44 annular ring 0.6mm` | Pad too small for its hole | Enlarge the pad ([8.2](#82-pad-sizes-and-annular-rings)) |
 | `E44 annular ring 0.5mm on 1.0mm holes` | Pad on a 1.0 mm hole smaller than 2.0 mm | Enlarge the pad to 2.0 mm |
 | `E44 slot narrower than 1.0mm router` | Oval hole under 1.0 mm wide | Widen the slot |
-| `E44 pad drill not in tool set` | Pad hole isn't 0.7/0.8/1.0/1.5/2.0 | Change the hole ([7.2](#72-hole-sizes)), or make it a cutout ([7.4](#74-holes-bigger-than-20-mm)) |
+| `E44 pad drill not in tool set` | Pad hole isn't 0.7/0.8/1.0/1.5/2.0 | Change the hole ([8.1](#81-hole-sizes)), or make it a cutout ([8.3](#83-holes-bigger-than-20-mm)) |
 | `E44 via drill not in tool set` | Via hole isn't in the set | Change the via to 1.9 / 0.7 |
 
-## 13. Exporting for CircuitPro
+## 16. Exporting for CircuitPro
 
 **TODO:** Gerber and drill export settings for LPKF CircuitPro (layers,
 Excellon format and units, drill map), and how to bring the files to the lab.
 
-## 14. Pre-flight checklist
+## 17. Pre-flight checklist
 
 - [ ] E44 custom rules added, and the rule checker says **No errors found**
 - [ ] Every net class: clearance ≥ 0.35, track ≥ 0.5, via 1.9 / 0.7
 - [ ] Silkscreen and solder mask checks set to Ignore
-- [ ] Footprints come from the E44 library, in both the board and the schematic
+- [ ] Option A: working on a copy, library-mismatch warnings ignored. Option B: footprints come from the E44 library in both the board and the schematic
 - [ ] Every hole is 0.7, 0.8, 1.0, 1.5 or 2.0 mm; larger holes are Edge.Cuts cutouts
 - [ ] No SMD parts finer than 0.95 mm pitch
 - [ ] No copper text

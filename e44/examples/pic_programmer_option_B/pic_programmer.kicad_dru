@@ -1,0 +1,85 @@
+(version 1)
+
+# LPKF ProtoMat E44 rules
+# =======================
+# 
+# Design rules to check your PCB design before bringing to the protomat E44. The E44 is
+# capable of tighter tollerances but it is less guarunteed.
+#
+# Tool set:
+#   Universal Cutter 0.2-0.5 mm   isolation, set isolation width 0.3 mm in CircuitPro
+#   End mill 2.0 mm               copper rubout
+#   Contour router 1.0 mm         board outline, slots, cutouts
+#   Drills                        0.7 / 0.8 / 1.0 / 1.5 / 2.0 mm
+#
+# Paste into:
+#   Board Setup > Design Rules > Custom Rules
+#
+# Keep each condition on a single line. KiCad silently ignores the whole
+# file if a condition string contains a line break.
+
+
+# ---------------------------------------------------------------------------
+# Copper isolation and routing limits
+# ---------------------------------------------------------------------------
+
+# 0.3 mm isolation channel + 0.05 mm margin
+(rule "E44 clearance 0.35mm"
+  (constraint clearance (min 0.35mm)))
+
+(rule "E44 min track 0.5mm"
+  (constraint track_width (min 0.5mm)))
+
+(rule "E44 copper to edge 1.0mm"
+  (constraint edge_clearance (min 1.0mm)))
+
+
+# ---------------------------------------------------------------------------
+# Annular rings
+# ---------------------------------------------------------------------------
+
+(rule "E44 annular ring 0.6mm"
+  (constraint annular_width (min 0.6mm)))
+
+# 1.0 mm holes are for 2.54 mm headers.
+# A 2.0 mm pad leaves a 0.5 mm annular ring.
+#
+# This rule must come after the general annular rule so it takes precedence.
+(rule "E44 annular ring 0.5mm on 1.0mm holes"
+  (condition "A.Type == 'Pad' && A.Hole_Size_X > 0.995mm && A.Hole_Size_X < 1.005mm")
+  (constraint annular_width (min 0.5mm)))
+
+
+# ---------------------------------------------------------------------------
+# Slots and oval holes
+# ---------------------------------------------------------------------------
+
+# Oval holes/slots get routed with the 1.0 mm contour router.
+(rule "E44 slot narrower than 1.0mm router"
+  (condition "A.Type == 'Pad' && A.Hole_Size_X != A.Hole_Size_Y")
+  (constraint hole_size (min 1.0mm)))
+
+
+# ---------------------------------------------------------------------------
+# Pad drill sizes
+# ---------------------------------------------------------------------------
+
+# Round pad holes, plated and NPTH, must match a drill you have.
+#
+# Allowed drills:
+#   0.7 / 0.8 / 1.0 / 1.5 / 2.0 mm
+#
+# To add a size, copy one of the drill-size windows.
+(rule "E44 pad drill not in tool set (0.7/0.8/1.0/1.5/2.0)"
+  (condition "A.Type == 'Pad' && A.Pad_Type != 'SMD' && A.Hole_Size_X == A.Hole_Size_Y && !((A.Hole_Size_X > 0.695mm && A.Hole_Size_X < 0.705mm) || (A.Hole_Size_X > 0.795mm && A.Hole_Size_X < 0.805mm) || (A.Hole_Size_X > 0.995mm && A.Hole_Size_X < 1.005mm) || (A.Hole_Size_X > 1.495mm && A.Hole_Size_X < 1.505mm) || (A.Hole_Size_X > 1.995mm && A.Hole_Size_X < 2.005mm))")
+  (constraint disallow pad))
+
+
+# ---------------------------------------------------------------------------
+# Via drill sizes
+# ---------------------------------------------------------------------------
+
+# Vias use the property 'Hole' rather than 'Hole_Size_X'.
+(rule "E44 via drill not in tool set (0.7/0.8/1.0/1.5/2.0)"
+  (condition "A.Type == 'Via' && !((A.Hole > 0.695mm && A.Hole < 0.705mm) || (A.Hole > 0.795mm && A.Hole < 0.805mm) || (A.Hole > 0.995mm && A.Hole < 1.005mm) || (A.Hole > 1.495mm && A.Hole < 1.505mm) || (A.Hole > 1.995mm && A.Hole < 2.005mm))")
+  (constraint disallow via))
