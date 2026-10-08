@@ -48,6 +48,7 @@ versions.
 Related files:
 
 - [`../e44.kicad_dru`](../e44.kicad_dru): KiCad custom rules
+- [`../e44.kicad_jobset`](../e44.kicad_jobset): KiCad jobset that exports the files for CircuitPro
 - [`../E44_PCB_Design_Rules_Poster.pdf`](../E44_PCB_Design_Rules_Poster.pdf): one-page summary poster
 - [`../examples/pic_programmer_option_A/`](../examples/pic_programmer_option_A/) and [`../examples/pic_programmer_option_B/`](../examples/pic_programmer_option_B/): the example adapted each way
 
@@ -715,8 +716,80 @@ The copper the E44 will leave behind on each side (black is copper):
 
 ## 16. Exporting for CircuitPro
 
-**TODO:** Gerber and drill export settings for LPKF CircuitPro (layers,
-Excellon format and units, drill map), and how to bring the files to the lab.
+The E44 only needs four files: top copper, bottom copper, the board outline
+and the drill file. [`e44.kicad_jobset`](../e44.kicad_jobset) is a KiCad
+**jobset** (a saved list of exports) that makes exactly those in one click.
+Jobsets need KiCad 9 or later.
+
+### 16.1 Add the jobset to your project
+
+1. Download [`e44.kicad_jobset`](../e44.kicad_jobset) and put it in your
+   project folder, next to the `.kicad_pro` file.
+2. **Save the board** in the PCB Editor. The jobset exports the board as it
+   is saved on disk.
+3. In the KiCad **project manager** (the window that lists the project files,
+   not the PCB Editor), choose **File → Open Jobset File…** and pick
+   `e44.kicad_jobset`.
+
+![The project manager's File menu, with Open Jobset File highlighted](images/export-1-open-jobset.png)
+
+### 16.2 Generate the files
+
+The jobset opens in its own tab. Click **Generate** (1). The files appear in
+a new `e44_output` folder in the project (2), and the blue tick shows it
+worked:
+
+![The E44 jobset tab after Generate: two jobs, and the e44_output folder with the files](images/export-2-generate.png)
+
+| File | What it is | Use in CircuitPro |
+|---|---|---|
+| `<board>-F_Cu.gtl` | Top copper | Top layer |
+| `<board>-B_Cu.gbl` | Bottom copper | Bottom layer |
+| `<board>-Edge_Cuts.gm1` | Board outline, plus any cutouts from [8.3](#83-holes-bigger-than-20-mm) | Board outline (contour routing) |
+| `<board>.drl` | Excellon drill file, all holes, in mm | Drill |
+| `<board>-job.gbrjob` | Gerber job file (a summary for board houses) | Not needed |
+
+If your board has renamed copper layers the file names follow them:
+pic_programmer's are `top_layer.gtl` and `bottom_layer.gbl`.
+
+Re-run **Generate** whenever you change the board. It overwrites the old files.
+
+### 16.3 What the jobset is set to
+
+You don't need to change anything, but this is what it does. Double-click a
+job in the list to see or change its settings.
+
+**Gerbers:** only **F.Cu**, **B.Cu** and **Edge.Cuts**, with **Refill zones
+before plotting** on so a stale copper pour can't be exported. Everything
+else is KiCad's default (4.5 format in mm, X2 attributes, Protel extensions).
+The jobset names layers by their internal names, so it picks the right layers
+even on a board where they've been renamed, and on a 4-layer board it still
+exports only the outer two.
+
+![Gerber job settings: top and bottom copper and Edge.Cuts ticked, Refill zones on](images/export-3-gerber-job.png)
+
+**Drill:** Excellon in **millimetres**, decimal format, absolute origin,
+plated and non-plated holes in one file (the E44 doesn't plate holes, so
+there's nothing to keep apart).
+
+![Drill job settings: Excellon, units in millimetres](images/export-4-drill-job.png)
+
+### 16.4 From the command line
+
+The same jobset runs without opening KiCad, which is handy for scripts:
+
+```
+kicad-cli jobset run -f e44.kicad_jobset my_board.kicad_pro
+```
+
+### 16.5 Still to check at the machine
+
+**TODO:** confirm against CircuitPro on the lab PC:
+
+- that CircuitPro reads the Excellon file in mm without changing its import
+  settings, and that the drill sizes come through matching the tool rack;
+- how slots (oval holes) import, if a board has any;
+- how the lab gets files to the machine.
 
 ## 17. Pre-flight checklist
 
@@ -731,4 +804,4 @@ Excellon format and units, drill map), and how to bring the files to the lab.
 - [ ] Ground pour on spare area
 - [ ] As few vias and top-side joints as possible
 - [ ] DRC: 0 errors, 0 unconnected, schematic parity passes
-- [ ] Gerbers and drill files exported
+- [ ] Board saved, then exported with `e44.kicad_jobset` (4 files in `e44_output`)
