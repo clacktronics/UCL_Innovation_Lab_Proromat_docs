@@ -10,6 +10,9 @@ Producing a circuit board on the ProtoMat E44 is a little more limited than havi
 
 The advantage is that once you have your design you can make it yourself within an hour!
 
+
+Ideally you should design with the design rules in mind from scratch. It is most likely though that when you come to design a board you will use the default KiCAD footprints which do not all fit the limited design rules. So you will probably have to follow this guide.
+
 This guide is to show how to take a KiCad PCB design and make it something the Innovation Lab's
 ProtoMat E44 can mill reliably. The guide works through a real example, the
 `pic_programmer` demo that ships with KiCad that you should be able to find on every install. We use design rule checks on the stock design and modify it to suit the E44 machine.
@@ -49,6 +52,9 @@ Related files:
 - [`../examples/pic_programmer_option_A/`](../examples/pic_programmer_option_A/) and [`../examples/pic_programmer_option_B/`](../examples/pic_programmer_option_B/): the example adapted each way
 
 ---
+## 0. How does the process work?
+
+The design you make will be exported from KiCAD as Gerber files, these are a universal format that is used to manufacture most PCBs in the world. The software that controls the ProtoMat is called CircuitPro and in interprets the Gerber files. Some things we do at this stage are to also please that software, for example unusual shaped holes are converted to outline.
 
 ## 1. Why designs need adapting and what a mill is for
 
@@ -64,6 +70,7 @@ and mills an isolation channel around every track and pad. This means:
 - **Holes aren't plated.** A board house plates every hole so the top and
   bottom copper are joined. On the E44 they aren't (see
   [section 14](#14-things-drc-wont-tell-you)).
+- **Larger tolerances limit your component choices.** - BGA, TSSOP, MSOP, QFN footprints will not be produceable 
 - **More detail takes more time** As the mill has to outline every track, the more complex the design the longer it will take.
 
 KiCad's default libraries and settings assume a board house, so most designs
@@ -169,8 +176,8 @@ same thing.
 
 ## 6. Step 2: Set the board defaults
 
-The custom rules catch problems when you run DRC. Setting KiCad's defaults to
-match stops you creating those problems while you work. All of these are in
+The custom rules catch problems when you run DRC but there are other rules than are followed when you lay out a board that gives you visual feedback when routing.
+Setting KiCad's defaults to match the custom rules stops you creating those problems while you work. All of these are in
 **File → Board Setup…**.
 
 ### Constraints
@@ -198,8 +205,9 @@ to at least 0.35 clearance, 0.5 track width and a 1.9 / 0.7 via.
 
 ![Board Setup, Net Classes page](images/board-setup-net-classes.png)
 
+If you are using a design you did not make, make sure that all classes are changed
 pic_programmer has a `POWER` class for GND and VCC with 0.8 mm tracks, which
-is fine, but its clearance was 0.28 mm, so it had to be raised to 0.35.
+is fine, but its clearance was 0.28 mm, so it had to be raised to 0.35. 
 
 ### Pre-defined sizes
 
@@ -215,7 +223,7 @@ size drop-downs while routing:
 
 **Design Rules → Violation Severity**. The E44 makes no solder mask or
 silkscreen, so set these to **Ignore**. Otherwise they bury the errors that
-matter (pic_programmer reports nearly 100 of them):
+matter for the E44 under errors that don't (pic_programmer reports nearly 100 of them):
 
 - Solder mask aperture bridges items with different nets
 - Silkscreen clearance
@@ -365,6 +373,9 @@ most of them aren't in the E44 drill set:
 
 ### 9.3 Change many pads at once
 
+It is tedious to change every pad one at a time, ideally changes should be done in groups. Unfortunately KiCAD does not have a tool
+to change a paramater on multiple selected pads, but it can copy a pads parameters and push to others. To do this you have to select what you want to change, create the change then push the changes to the pads you want to change.
+
 Clicking a row in the Drills list **selects every pad with that hole size**.
 The **Properties** panel on the left then edits all of them together.
 
@@ -410,6 +421,8 @@ long 2.4 × 1.6 mm DIP pads become 2.0 × 1.6 mm. That's fine: the next step
 fixes their height, and 2.0 × 2.0 mm pads pass the rules.
 
 ### 9.4 Fix the non-round pads
+
+We now have to think about annular rings, when we changed the hole size new DRC errors appear because they larger hole brings the outside of the pad closer to the hole.
 
 A Drills row mixes pad shapes. pic_programmer's 0.8 mm row has round resistor
 pads, oval DIP pads and square pin-1 pads. When a selection contains round
